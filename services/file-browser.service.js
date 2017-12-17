@@ -2,7 +2,7 @@ var fs = require('fs');
 var config = require('../config.json');
 var path = require('path');
 const IMAGE_PATHS = ['.jpg', '.png', '.bmp', '.jpeg'];
-const VIDEO_PATHS = ['.mpg', '.avi', '.3gp'];
+const VIDEO_PATHS = ['.mpg', '.avi', '.3gp', '.mp4'];
 
 function getPaths(filePath) {
     let result = {

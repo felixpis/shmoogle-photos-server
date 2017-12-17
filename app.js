@@ -46,12 +46,31 @@ app.get('/api/image/:type/:path/:fileName', function (req, res) {
 
 app.get('/api/video/:type/:path/:fileName', function (req, res) {
     //res.header("Content-Type", "image/jpg");
-    videoManager.getThumbnail(req.params.path, req.params.fileName, req.params.type).then((url) => {
+    if (req.params.type == "preview") {
+        let head = {};
+        let stream = videoManager.createStream(req.params.path, req.params.fileName, req.headers['range'], head);
+        res.writeHead(head.code, head.header);
+        stream.pipe(res);
+        return;
+    }
+    if (req.query.id && req.query.id == 'animation') {
+        return res.sendFile(videoManager.getAnimation(req.params.path, req.params.fileName));
+    }
+    videoManager.getThumbnail(req.params.path, req.params.fileName).then((url) => {
         res.sendFile(url);
     }).catch((error) => {
         console.log(error);
         res.status(500).send(error);
     })
+
+})
+
+app.get('/api/videotest', function (req, res) {
+    //res.header("Content-Type", "image/jpg");
+    //videoManager.createThumbnail("Y:\\Photos\\Путешествия и поездки\\2009-09. Прага. Свадьба Марианны\\P9290130.AVI", "C:\\Temp\\P9290130.AVI\\", 200, 200);
+    //videoManager.createGif("Y:\\Photos\\Путешествия и поездки\\2009-09. Прага. Свадьба Марианны\\P9290130.AVI", "C:\\Temp\\P9290130.AVI\\animated.gif", 200, 200);
+    videoManager.createGif("C:\\Photos\\Мои Фотки\\P9270030.AVI", "C:\\Photos\\Мои Фотки\\Temp\\P9290130.AVI\\animated.gif", 200, 200)
+    res.status(200).send({ done: true })
 
 })
 

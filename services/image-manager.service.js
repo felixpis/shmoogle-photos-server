@@ -14,7 +14,9 @@ const sizes = {
 
 function getThumbnail(filePath, fileName, type) {
     return new Promise((resolve, reject) => {
+        // Source file original image
         let sourcePathFile = path.resolve(filePath, fileName);
+        // Destination file thumbnail of original image
         let thumbPath = path.resolve(config.cacheFolder, type, normalizeSourcePathFile(sourcePathFile));
         fs.exists(thumbPath, (exists) => {
             if (exists) {
@@ -22,11 +24,16 @@ function getThumbnail(filePath, fileName, type) {
                 return;
             }
 
+            // Create recursively directories in cache for this file thumbnail
             ensureDirExists(thumbPath);
 
             let size = sizes[type];
             createThumbnail(sourcePathFile, thumbPath, size.x, size.y).then(() => {
                 resolve(thumbPath);
+                // After creating thumbnail, try create also preview
+                if (type == 'thumbnails') {
+                    getThumbnail(filePath, fileName, "preview");
+                }
             }).catch((error) => {
                 reject(error);
             });
@@ -50,6 +57,9 @@ function ensureDirExists(filePath) {
     }
 }
 
+/**
+ * Create thumbnail for original image
+ */
 function createThumbnail(file, targetFile, width, height) {
     return new Promise((resolve, reject) => {
         var gmObject = gm(file);
