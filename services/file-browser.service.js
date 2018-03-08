@@ -26,6 +26,7 @@ function getPaths(filePath) {
             result.currentPath = path.resolve(filePath);
             result.previousPath = isPathRoot(filePath) ? '' : path.resolve(getPreviousPath(filePath));
             result.files.push(...files);
+            result.files.sort();
             resolve(result);
         })
     })
@@ -63,8 +64,8 @@ function retrieveFileStats(filePath, files) {
                 }
                 counter++;
                 if (counter == files.length) {
-                    result.dirs.sort(sortMethod);
-                    result.files.sort(sortMethod);
+                    result.dirs.sort(sortDirs);
+                    result.files.sort(sortFiles);
                     resolve(result);
                 }
             })
@@ -85,12 +86,24 @@ function getPathsData(paths) {
     })
 }
 
-function sortMethod(a, b) {
+function sortDirs(a, b) {
     if (a.title < b.title) {
         return -1;
     }
 
     if (a.title > b.title) {
+        return 1;
+    }
+
+    return 0;
+}
+
+function sortFiles(a, b) {
+    if (a.caption < b.caption) {
+        return -1;
+    }
+
+    if (a.caption > b.caption) {
         return 1;
     }
 
