@@ -3,6 +3,8 @@ var fs = require('fs');
 var path = require('path');
 var config = require('../config.json');
 var fx = require('mkdir-recursive');
+const imageInfo = require('imageinfo');
+const exifImage = require('exif').ExifImage;
 const sizes = {
     thumbnails: {
         x: 200, y: 200
@@ -18,6 +20,12 @@ function getThumbnail(filePath, fileName, type) {
         let sourcePathFile = path.resolve(filePath, fileName);
         // Destination file thumbnail of original image
         let thumbPath = path.resolve(config.cacheFolder, type, normalizeSourcePathFile(sourcePathFile));
+        if (type == 'preview') {
+            new exifImage({image: sourcePathFile}, (err, data) => {
+                //console.log(err);
+                console.log('EXIF', data);
+            })
+        }
         fs.exists(thumbPath, (exists) => {
             if (exists) {
                 resolve(thumbPath);
@@ -28,6 +36,7 @@ function getThumbnail(filePath, fileName, type) {
             ensureDirExists(thumbPath);
 
             let size = sizes[type];
+
             createThumbnail(sourcePathFile, thumbPath, size.x, size.y).then(() => {
                 resolve(thumbPath);
                 // After creating thumbnail, try create also preview

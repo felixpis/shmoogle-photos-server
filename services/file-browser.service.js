@@ -1,37 +1,93 @@
 var fs = require('fs');
 var config = require('../config.json');
 var path = require('path');
-const IMAGE_PATHS = ['.jpg', '.png', '.bmp', '.jpeg'];
-const VIDEO_PATHS = ['.mpg', '.avi', '.3gp', '.mp4'];
+const IMAGE_PATHS = ['jpg', 'png', 'bmp', 'jpeg'];
+const VIDEO_PATHS = ['mpg', 'avi', '3gp', 'mp4'];
+const glob = require('glob');
+const async = require('async');
+const extensions = getFilesExtensions();
 
 function getPaths(filePath) {
     let result = {
         currentPath: '',
         previousPath: null,
+        dirs: [],
         files: []
     }
     return new Promise((resolve, reject) => {
         if (!filePath) {
-            result.files.push(...config.roots);
+            result.dirs.push(...config.roots);
             result.currentPath = '';
             result.previousPath = null;
             resolve(result);
             return;
         }
-        fs.readdir(filePath, (error, files) => {
-            if (error) {
-                reject(error);
+
+        async.parallel({
+            files: function (callback) {
+                getFiles(filePath, callback);
+            },
+            dirs: function (callback) {
+                getDirs(filePath, callback);
+            }
+        }, (err, asyncResult) => {
+            if (err) {
+                reject(err);
                 return;
             }
+            result.dirs = asyncResult.dirs.map((dir) => {
+                return {
+                    title: path.basename(dir),
+                    path: dir
+                }
+            });
+            result.files = asyncResult.files.map((file) => {
+                let newFile = prepareFileObject(path.basename(file), filePath, 0);
+                return newFile
+            });
             result.currentPath = path.resolve(filePath);
             result.previousPath = isPathRoot(filePath) ? '' : path.resolve(getPreviousPath(filePath));
-            result.files.push(...files);
-            result.files.sort();
             resolve(result);
         })
+
+        // fs.readdir(filePath, (error, files) => {
+        //     if (error) {
+        //         reject(error);
+        //         return;
+        //     }
+        //     result.currentPath = path.resolve(filePath);
+        //     result.previousPath = isPathRoot(filePath) ? '' : path.resolve(getPreviousPath(filePath));
+        //     result.files.push(...files);
+        //     result.files.sort();
+        //     resolve(result);
+        // })
     })
 
 }
+
+function getFiles(filePath, next) {
+    glob(`${filePath}*.{${extensions}}`, (err, files) => {
+        next(err, files)
+    })
+}
+
+function getDirs(filePath, next) {
+    glob(`${filePath}*/`, (err, files) => {
+        next(err, files)
+    })
+}
+
+function getFilesExtensions() {
+    let extensions = [];
+    extensions.push(...IMAGE_PATHS);
+    extensions.push(...VIDEO_PATHS);
+    extensions.push(...IMAGE_PATHS.map(i => i.toUpperCase()));
+    extensions.push(...VIDEO_PATHS.map(i => i.toUpperCase()));
+
+    return extensions.join(',');
+}
+
+
 
 function retrieveFileStats(filePath, files) {
 
@@ -132,7 +188,7 @@ function isDir(file) {
 }
 
 function getFileType(file) {
-    let ext = path.extname(file).toLowerCase();
+    let ext = path.extname(file).toLowerCase().substr(1);
     if (IMAGE_PATHS.indexOf(ext) >= 0) {
         return 'image';
     }

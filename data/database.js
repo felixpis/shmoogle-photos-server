@@ -7,11 +7,12 @@ var url = config.database.url;
 
 
 module.exports.connect = function (next) {
-    mongoClient.connect(url, function (err, db) {
+    mongoClient.connect(url, function (err, client) {
         if (err) {
             console.error('Failed to connect to server', err);
             return next(err);
         }
+        const db = client.db("shmoogle-photos");
         console.log("Connected correctly to MongoDB server.");
         var theDB = {
             db: db,
